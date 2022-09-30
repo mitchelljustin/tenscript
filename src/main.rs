@@ -4,12 +4,16 @@ use std::error::Error;
 use std::fs;
 
 mod scanner;
+mod sexp;
+mod error;
 
 
 fn main() -> Result<(), Box<dyn Error>> {
     let source = fs::read_to_string("example.clj")?;
     let tokens = scanner::scan(&source)?;
-    let just_tokens: Vec<_> = tokens.iter().map(|t| t.tok.clone()).collect();
-    println!("{just_tokens:?}");
+    // let just_tokens: Vec<_> = tokens.iter().map(|t| t.tok.clone()).collect();
+    // println!("{just_tokens:?}");
+    let sexp = sexp::parse_tokens(tokens)?;
+    println!("{sexp}");
     Ok(())
 }

@@ -1,17 +1,18 @@
 use std::fmt::{Display, Formatter};
 use std::num::{ParseFloatError, ParseIntError};
 use std::str::FromStr;
+use crate::error;
 use crate::scanner::ErrorKind::{FloatParseFailed, IllegalChar, IntParseFailed};
-use crate::scanner::Token::{Atom, EOF, Ident, Integer, Number, Percent, Sym};
+use crate::scanner::Token::{Atom, EOF, Ident, Integer, Float, Paren, Percent, String as StringLit};
 
 #[derive(Debug, Clone)]
 pub enum Token {
     Ident(String),
+    Paren(char),
     Atom(String),
-    StringLit(String),
-    Sym(&'static str),
+    String(String),
     Integer(i64),
-    Number(f64),
+    Float(f64),
     Percent(f64),
     EOF,
 }
@@ -35,31 +36,31 @@ impl Display for Location {
     }
 }
 
-#[derive(Debug)]
-pub struct Error {
+#[derive(Debug, Clone)]
+pub struct ScanError {
     kind: ErrorKind,
     loc: Location,
 }
 
-impl Display for Error {
+impl Display for ScanError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let Error { kind, loc } = self;
+        let ScanError { kind, loc } = self;
         write!(f, "{kind:?} at {loc}")
     }
 }
 
-impl std::error::Error for Error {}
+impl std::error::Error for ScanError {}
 
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ErrorKind {
     IllegalChar { ch: char },
     IntParseFailed { err: ParseIntError },
     FloatParseFailed { err: ParseFloatError },
 }
 
-pub fn scan(source: &str) -> Result<Vec<ScannedToken>, Error> {
-    Scanner::new(source).scan()
+pub fn scan(source: &str) -> Result<Vec<ScannedToken>, error::Error> {
+    Scanner::new(source).scan().map_err(error::Error::ScanError)
 }
 
 struct Scanner {
@@ -69,11 +70,6 @@ struct Scanner {
     start: usize,
     loc: Location,
 }
-
-const SYMS: &[&'static str] = &[
-    "(",
-    ")",
-];
 
 impl Scanner {
     pub fn new(source: &str) -> Self {
@@ -86,11 +82,11 @@ impl Scanner {
         }
     }
 
-    pub fn scan(mut self) -> Result<Vec<ScannedToken>, Error> {
+    pub fn scan(mut self) -> Result<Vec<ScannedToken>, ScanError> {
         while !self.at_end() {
             self.start = self.index;
             self.scan_token()
-                .map_err(|kind| Error { kind, loc: self.loc.clone() })?;
+                .map_err(|kind| ScanError { kind, loc: self.loc.clone() })?;
         }
         self.add(EOF);
         Ok(self.tokens)
@@ -100,8 +96,9 @@ impl Scanner {
     fn scan_token(&mut self) -> Result<(), ErrorKind> {
         match self.current() {
             '0'..='9' | '-' => self.number()?,
-            'a'..='z' | 'A'..='Z' | '-' => self.ident(),
+            'a'..='z' | 'A'..='Z' => self.ident(),
             ':' => self.atom(),
+            '"' => self.string(),
             '\n' => {
                 self.loc.line += 1;
                 self.loc.col = 0;
@@ -110,14 +107,11 @@ impl Scanner {
             ' ' | '\t' => {
                 self.increment()
             }
-            ch => {
-                let ch_str = ch.to_string();
-                let Some(&sym) = SYMS.iter().find(|&&s| s == ch_str) else {
-                    return Err(IllegalChar { ch });
-                };
+            ch @ ('(' | ')') => {
                 self.increment();
-                self.add(Sym(sym));
+                self.add(Paren(ch));
             }
+            ch => return Err(IllegalChar { ch }),
         }
         Ok(())
     }
@@ -149,7 +143,7 @@ impl Scanner {
     }
 
     fn consume_ident_chars(&mut self) {
-        let ('a'..='z' | 'A'..='Z' | '-') = self.current() else {
+        let ('a'..='z' | 'A'..='Z') = self.current() else {
             return;
         };
         self.increment();
@@ -163,14 +157,20 @@ impl Scanner {
             self.increment();
             true
         } else { false };
-        while let '0'..='9' = self.current() {
+        let mut num_string = String::new();
+        while let ch @ ('0'..='9' | '_') = self.current() {
+            if ch != '_' {
+                num_string.push(ch);
+            }
             self.increment();
         }
         if let '.' = self.current() {
+            num_string.push('.');
             self.increment();
-            while let '0'..='9' = self.current() {
+            while let ch @ '0'..='9' = self.current() {
+                num_string.push(ch);
                 self.increment();
-                let mut value = f64::from_str(&self.lexeme())
+                let mut value = f64::from_str(&num_string)
                     .map_err(|err| FloatParseFailed { err })?;
                 if negative {
                     value = -value;
@@ -180,12 +180,13 @@ impl Scanner {
                         self.increment();
                         self.add(Percent(value));
                     }
-                    _ => self.add(Number(value)),
+                    _ => self.add(Float(value)),
                 };
             }
         } else {
-            let mut value = i64::from_str(&self.lexeme())
-                .map_err(|err| IntParseFailed { err })?;;
+            let mut value = i64::from_str(&num_string)
+                .map_err(|err| IntParseFailed { err })?;
+            
             if negative {
                 value = -value;
             }
@@ -213,5 +214,16 @@ impl Scanner {
         self.consume_ident_chars();
         let name = self.lexeme();
         self.add(Ident(name));
+    }
+    fn string(&mut self) {
+        self.increment();
+        while self.current() != '"' {
+            self.increment();
+        }
+        self.increment();
+        let mut string = self.lexeme();
+        string.remove(0);
+        string.remove(string.len() - 1);
+        self.add(StringLit(string));
     }
 }
