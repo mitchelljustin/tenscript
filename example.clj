@@ -1,12 +1,11 @@
 (fabric
  (name "Headless Hug")
  (scale 105%)
- (seed :left-right)
- (vulcanize :bowtie)
  (features
   (iterations-per-frame 100)
   (push-over-pull 400%))
  (build
+  (seed :left-right)
   (branch
    (grow :A
     (scale 95%)
@@ -33,7 +32,8 @@
     (grow :C
       (scale 93%)
       (twist 1 0 0 0 1 0 0)
-      (mark :hands))))))
+      (mark :hands)))))
+   (vulcanize :bowtie))
  (shape
   (pull-together :legs 5%)
   (pull-together :hands 7%)

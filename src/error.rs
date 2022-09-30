@@ -1,15 +1,16 @@
-use std::fmt::{Display, Formatter};
-use crate::{scanner, sexp};
+use std::fmt::{Debug, Display, Formatter};
+use crate::{interpreter, scanner, sexp};
 
 #[derive(Debug)]
 pub enum Error {
     ScanError(scanner::ScanError),
     SexpParseError(sexp::ParseError),
+    InterpretError(interpreter::InterpretError),
 }
 
 impl Display for Error {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{self:?}")
+        Debug::fmt(self, f)
     }
 }
 

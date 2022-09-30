@@ -7,7 +7,9 @@ use crate::sexp::ErrorKind::{ConsumeFailed, MatchExhausted};
 
 
 #[derive(Debug, Clone)]
-pub enum Literal {
+pub enum Sexp {
+    List(Vec<Sexp>),
+    Ident(String),
     Atom(String),
     String(String),
     Integer(i64),
@@ -15,29 +17,10 @@ pub enum Literal {
     Percent(f64),
 }
 
-impl Display for Literal {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Literal::Atom(value) => write!(f, ":{value}"),
-            Literal::String(value) => write!(f, "\"{value}\""),
-            Literal::Percent(value) => write!(f, "{value}%"),
-            Literal::Float(value) => write!(f, "{value}"),
-            Literal::Integer(value) => write!(f, "{value}"),
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub enum Sexp {
-    List { terms: Vec<Sexp> },
-    Ident { name: String },
-    Literal { value: Literal },
-}
-
 impl Display for Sexp {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            Sexp::List { terms } => {
+            Sexp::List(terms) => {
                 f.write_str("(")?;
                 for (i, term) in terms.iter().enumerate() {
                     term.fmt(f)?;
@@ -48,8 +31,12 @@ impl Display for Sexp {
                 f.write_str(")")?;
                 Ok(())
             }
-            Sexp::Ident { name } => write!(f, "{name}"),
-            Sexp::Literal { value } => write!(f, "{value}"),
+            Sexp::Ident(name) => write!(f, "{name}"),
+            Sexp::Atom(value) => write!(f, ":{value}"),
+            Sexp::String(value) => write!(f, "\"{value}\""),
+            Sexp::Percent(value) => write!(f, "{value}%"),
+            Sexp::Float(value) => write!(f, "{value}"),
+            Sexp::Integer(value) => write!(f, "{value}"),
         }
     }
 }
@@ -115,17 +102,17 @@ impl Parser {
             Paren('(') =>
                 self.list(),
             Ident(name) =>
-                Ok(Sexp::Ident { name }),
+                Ok(Sexp::Ident(name)),
             Float(value) =>
-                Ok(Sexp::Literal { value: Literal::Float(value) }),
+                Ok(Sexp::Float(value)),
             Integer(value) =>
-                Ok(Sexp::Literal { value: Literal::Integer(value) }),
+                Ok(Sexp::Integer(value)),
             Percent(value) =>
-                Ok(Sexp::Literal { value: Literal::Percent(value) }),
+                Ok(Sexp::Percent(value)),
             Atom(value) =>
-                Ok(Sexp::Literal { value: Literal::Atom(value) }),
+                Ok(Sexp::Atom(value)),
             Token::String(value) =>
-                Ok(Sexp::Literal { value: Literal::String(value) }),
+                Ok(Sexp::String(value)),
             _ => Err(MatchExhausted),
         }
     }
@@ -140,6 +127,6 @@ impl Parser {
             return Err(ConsumeFailed { expected: "right paren" });
         };
         self.increment();
-        Ok(Sexp::List { terms })
+        Ok(Sexp::List(terms))
     }
 }

@@ -6,6 +6,7 @@ use std::fs;
 mod scanner;
 mod sexp;
 mod error;
+mod interpreter;
 
 
 fn main() -> Result<(), Box<dyn Error>> {
