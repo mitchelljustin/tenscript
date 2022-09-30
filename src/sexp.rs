@@ -1,4 +1,4 @@
-use std::fmt::{Display, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 use crate::error::Error;
 use crate::scanner;
 use crate::scanner::{ScannedToken, Token};
@@ -6,7 +6,7 @@ use crate::scanner::Token::{Atom, Float, Ident, Integer, Paren, Percent, EOF};
 use crate::sexp::ErrorKind::{ConsumeFailed, MatchExhausted};
 
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum Sexp {
     List(Vec<Sexp>),
     Ident(String),
@@ -17,13 +17,20 @@ pub enum Sexp {
     Percent(f64),
 }
 
+impl Debug for Sexp {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "'{self}'")
+    }
+}
+
+
 impl Display for Sexp {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Sexp::List(terms) => {
                 f.write_str("(")?;
                 for (i, term) in terms.iter().enumerate() {
-                    term.fmt(f)?;
+                    Display::fmt(term, f)?;
                     if i < terms.len() - 1 {
                         f.write_str(" ")?;
                     }

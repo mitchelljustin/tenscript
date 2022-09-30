@@ -16,5 +16,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // println!("{just_tokens:?}");
     let sexp = sexp::parse_tokens(tokens)?;
     println!("{sexp}");
+    let fabric = interpreter::interpret_sexp(&sexp)?;
+    println!("{fabric:#?}");
     Ok(())
 }
