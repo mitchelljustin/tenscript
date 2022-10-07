@@ -96,8 +96,12 @@ impl Scanner {
     fn scan_token(&mut self) -> Result<(), ErrorKind> {
         match self.current() {
             '0'..='9' | '-' => self.number()?,
-            'a'..='z' | 'A'..='Z' => self.ident(),
-            ':' => self.atom(),
+            'a'..='z' => self.ident(),
+            'A'..='Z' => self.atom(),
+            ':' => {
+                self.increment();
+                self.atom();
+            },
             '"' => self.string(),
             '\n' => {
                 self.loc.line += 1;

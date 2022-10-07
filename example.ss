@@ -7,29 +7,29 @@
  (build
   (seed :left-right)
   (branch
-   (grow :A
+   (grow A+
     (scale 95%)
     (twist 0 0 0 0 1 0 0)
     (mark :legs))
-   (grow :b
+   (grow B+
     (scale 95%)
     (twist 0 0 0 0 1 0 0)
     (mark :legs))
-   (grow :a
+   (grow A-
     (scale 90%)
     (branch
-    (grow :A 3
+    (grow A+ 3
       (mark :shoulders))
-    (grow :C
+    (grow C+
       (scale 93%)
       (twist 1 0 0 0 1 0 0)
       (mark :hands))))
-   (grow :B
+   (grow B+
     (scale 90%)
     (branch
-    (grow :A 3
+    (grow A+ 3
       (mark :shoulders))
-    (grow :C
+    (grow C+
       (scale 93%)
       (twist 1 0 0 0 1 0 0)
       (mark :hands)))))
@@ -39,7 +39,7 @@
   (pull-together :hands 7%)
   (pull-together :shoulders 5%))
  (pretense
-  (wait 10_000)
+  (wait 10000)
   (contract-conflicts)
-  (wait 10_000)
+  (wait 10000)
   (orient :legs)))
