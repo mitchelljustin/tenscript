@@ -1,19 +1,8 @@
-use std::collections::HashMap;
 use std::fmt::{Debug, Display, Formatter};
+
 use crate::error::Error;
-use crate::interpreter::ErrorKind::{BadCall, IllegalCall, Mismatch};
-use crate::interpreter::FaceName::Aplus;
 use crate::sexp;
 use crate::sexp::Sexp;
-
-#[derive(Debug, Clone)]
-pub enum Value {
-    Atom(String),
-    String(String),
-    Integer(i64),
-    Float(f64),
-    Percent(f64),
-}
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub enum FaceName {
@@ -50,11 +39,6 @@ pub enum VulcanizeType {
     Snelson,
 }
 
-impl Default for VulcanizeType {
-    fn default() -> Self {
-        VulcanizeType::Bowtie
-    }
-}
 
 #[derive(Debug, Clone)]
 pub enum SurfaceCharacter {
@@ -69,18 +53,6 @@ pub enum SeedType {
     LeftRight,
     Right,
     RightLeft,
-}
-
-impl Default for SeedType {
-    fn default() -> Self {
-        SeedType::Left
-    }
-}
-
-#[derive(Debug, Clone)]
-pub enum Twist {
-    Continue,
-    Switch,
 }
 
 #[derive(Debug, Clone)]
@@ -175,10 +147,11 @@ pub fn interpret_sexp(sexp: &Sexp) -> Result<FabricPlan, Error> {
 }
 
 mod builder {
-    use std::collections::{HashMap, HashSet};
+    use std::collections::HashSet;
     use std::iter::repeat;
-    use crate::interpreter::{ErrorKind, FabricPlan, FaceName, InterpretError, Mark, SeedType, TenscriptNode, Value, VulcanizeType, SurfaceCharacter};
-    use crate::interpreter::ErrorKind::{AlreadyDefined, BadCall, IllegalCall, Mismatch, MultipleBranches, IllegalRepetition, Unknown};
+
+    use crate::interpreter::{ErrorKind, FabricPlan, FaceName, InterpretError, Mark, SeedType, SurfaceCharacter, TenscriptNode, VulcanizeType};
+    use crate::interpreter::ErrorKind::{AlreadyDefined, BadCall, IllegalCall, IllegalRepetition, Mismatch, MultipleBranches, Unknown};
     use crate::sexp::Sexp;
 
     macro_rules! expect_enum {
@@ -271,8 +244,8 @@ mod builder {
                 "build" => {
                     build(&mut fabric, tail)?;
                 }
-                "shape" => {}
-                "pretense" => {}
+                "shape" => { todo!() }
+                "pretense" => { todo!() }
                 _ => return Err(IllegalCall { context: "fabric plan", sexp: sexp.clone() })
             }
         }
