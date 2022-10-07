@@ -10,7 +10,7 @@ mod interpreter;
 
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let source = fs::read_to_string("../example.ss")?;
+    let source = fs::read_to_string("example.ss")?;
     let tokens = scanner::scan(&source)?;
     // let just_tokens: Vec<_> = tokens.iter().map(|t| t.tok.clone()).collect();
     // println!("{just_tokens:?}");

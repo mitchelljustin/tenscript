@@ -97,11 +97,8 @@ impl Scanner {
         match self.current() {
             '0'..='9' | '-' => self.number()?,
             'a'..='z' => self.ident(),
-            'A'..='Z' => self.atom(),
-            ':' => {
-                self.increment();
-                self.atom();
-            },
+            'A'..='Z' => self.atom(false),
+            ':' => self.atom(true),
             '"' => self.string(),
             '\n' => {
                 self.loc.line += 1;
@@ -151,7 +148,7 @@ impl Scanner {
             return;
         };
         self.increment();
-        while let 'a'..='z' | 'A'..='Z' | '0'..='9' | '-' = self.current() {
+        while let 'a'..='z' | 'A'..='Z' | '0'..='9' | '-' | '+' = self.current() {
             self.increment();
         }
     }
@@ -206,11 +203,15 @@ impl Scanner {
         Ok(())
     }
 
-    fn atom(&mut self) {
-        self.increment(); // consume ':'
+    fn atom(&mut self, start_with_colon: bool) {
+        if start_with_colon {
+            self.increment();
+        }
         self.consume_ident_chars();
         let mut name = self.lexeme();
-        name.remove(0); // remove prefix ':'
+        if start_with_colon {
+            name.remove(0); // remove prefix ':'
+        }
         self.add(Atom(name));
     }
 
